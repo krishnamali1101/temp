@@ -1,3 +1,38 @@
+from fastapi import FastAPI, UploadFile, File
+import PyPDF2
+
+app = FastAPI()
+
+def extract_pdf_metadata(file_path):
+    with open(file_path, "rb") as f:
+        pdf_reader = PyPDF2.PdfFileReader(f)
+        metadata = {}
+        metadata['title'] = pdf_reader.getDocumentInfo().title
+        metadata['author'] = pdf_reader.getDocumentInfo().author
+        metadata['subject'] = pdf_reader.getDocumentInfo().subject
+        metadata['producer'] = pdf_reader.getDocumentInfo().producer
+        metadata['creator'] = pdf_reader.getDocumentInfo().creator
+        metadata['creation_date'] = pdf_reader.getDocumentInfo().creationDate
+        metadata['num_pages'] = pdf_reader.numPages
+    return metadata
+
+@app.post("/upload_pdf/")
+async def upload_pdf(file: UploadFile = File(...)):
+    # Check if the uploaded file is a PDF
+    if file.filename.endswith('.pdf'):
+        with open(file.filename, "wb") as buffer:
+            # Write the contents of the uploaded file to the server
+            buffer.write(await file.read())
+        
+        # Extract metadata from the uploaded PDF file
+        metadata = extract_pdf_metadata(file.filename)
+        
+        return {"filename": file.filename, "metadata": metadata, "message": "File uploaded successfully"}
+    else:
+        return {"error": "Only PDF files are allowed"}
+
+
+
 @app.post('/upload')
 def upload_file(uploaded_file: UploadFile = File(...)):
     path = f"files/{uploaded_file.filename}"
