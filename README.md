@@ -1,3 +1,15 @@
+@app.post('/upload')
+def upload_file(uploaded_file: UploadFile = File(...)):
+    path = f"files/{uploaded_file.filename}"
+    with open(path, 'w+b') as file:
+        shutil.copyfileobj(uploaded_file.file, file)
+
+    return {
+        'file': uploaded_file.filename,
+        'content': uploaded_file.content_type,
+        'path': path,
+    }
+
 # temp
 
 import streamlit as st
