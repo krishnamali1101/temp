@@ -10,6 +10,20 @@ def upload_file(uploaded_file: UploadFile = File(...)):
         'path': path,
     }
 
+   # Get the file metadata
+    file_metadata = {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "file_size": file.file_size,
+    }
+
+    # Save the file to the server
+    with open(file.filename, "wb") as f:
+        f.write(file.file)
+
+    # Return the file metadata
+    return file_metadata
+
 # temp
 
 import streamlit as st
