@@ -10,7 +10,9 @@ def upload_file(uploaded_file: UploadFile = File(...)):
         'path': path,
     }
 
-   # Get the file metadata
+@app.post("/uploadfile/")
+async def upload_file(file: UploadFile = File(...)):
+    # Get the file metadata
     file_metadata = {
         "filename": file.filename,
         "content_type": file.content_type,
