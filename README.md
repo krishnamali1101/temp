@@ -1,3 +1,46 @@
+
+from fastapi import HTTPException, status
+from datetime import datetime
+import os
+import shutil
+from fastapi import APIRouter, UploadFile, File
+
+router = APIRouter()
+
+@router.post("/uploadfile")
+def upload_file(session_id: str, author_nbkid: str, bucket_name: str, file: UploadFile = File(...)):
+    if not file:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No upload file sent")
+    elif not file.filename.endswith("-pdf"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed")
+    else:
+        try:
+            # Get the file metadata
+            file_metadata = {
+                "author_nbkid": author_nbkid,
+                "bucket_name": bucket_name,
+                "filename": file.filename,
+                "file_size": file.size,
+                "Upload_datetine": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            }
+            
+            # Save the file to the server
+            model_data_load_path = get_setting("model_data_load_path")
+            bucket_path = os.path.join(model_data_load_path, author_nbkid, bucket_name)
+            if not os.path.exists(bucket_path):
+                os.makedirs(bucket_path)
+            file_path = os.path.join(bucket_path, file.filename)
+            with open(file_path, "wb") as fp:
+                shutil.copyfileobj(file.file, fp)
+                
+            return {"message": f"Successfully uploaded in bucket: {bucket_name}", "file_metadata": file_metadata}
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+
+
+
 import os
 import shutil
 from fastapi import FastAPI, HTTPException
