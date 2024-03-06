@@ -1,3 +1,33 @@
+import os
+import shutil
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class FileDeleteRequest(BaseModel):
+    file_path: str
+
+@app.delete("/delete_file/")
+async def delete_file(request_data: FileDeleteRequest):
+    file_path = request_data.file_path
+    
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Attempt to delete the file
+    try:
+        os.remove(file_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+    
+    return {"message": f"File {file_path} deleted successfully"}
+    
+    
+    
+=============
+
 from fastapi import FastAPI, UploadFile, File
 import PyPDF2
 
