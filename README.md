@@ -1,3 +1,5 @@
+This script will remove leading and trailing spaces, convert the filename to lowercase, replace spaces with underscores, and remove special characters and other junk things (except digits and hyphens) in one line. You can test it with the example provided or replace "My FiLe -WiTh 123 !@#$%^&.txt" with your desired filename.
+
 import re
 
 def clean_filename(filename):
