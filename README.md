@@ -1,3 +1,17 @@
+import re
+
+def clean_filename(filename):
+    return re.sub(r'[^\w\d\-.]', '', filename.strip().lower().replace(" ", "_"))
+
+# Example usage
+original_filename = "  My FiLe -WiTh 123 !@#$%^&.txt  "
+cleaned_filename = clean_filename(original_filename)
+print("Original Filename:", original_filename)
+print("Cleaned Filename:", cleaned_filename)
+
+
+
+
 messages = [
     {"role": "user", "content": "What is your favourite condiment?"},
     {"role": "assistant", "content": "Well, I'm quite partial to a good squeeze of fresh lemon juice. It adds just the right amount of zesty flavour to whatever I'm cooking up in the kitchen!"},
