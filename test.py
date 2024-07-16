@@ -1,3 +1,34 @@
+from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
+from your_logging_module import logger  # Import your logger
+
+# Assuming @log_performance is a custom decorator you've implemented
+# @log_performance
+def get_history_user(db: Session, user):
+    logger.info('get_history_user!')
+    
+    # Query to get sessions of the user sorted by creation date (latest first)
+    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(desc(UserSession.created_at)).all()
+    
+    # Create a dictionary to store the chat history grouped by session
+    history = {}
+    
+    for session in sessions:
+        # Query to get chats in each session sorted by creation date (ascending)
+        chats = db.query(Chat).filter(Chat.session_id == session.id).order_by(asc(Chat.created_at)).all()
+        history[session.id] = {
+            'session_info': session,
+            'chats': chats
+        }
+    
+    return history
+
+
+
+
+
+
+
 from langchain.llms import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
 
