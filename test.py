@@ -1,3 +1,34 @@
+def get_history_user(db: Session, user: str):
+    logger.info('get_history_user!')
+    
+    # Query the UserSession table filtered by the user and ordered by session_id and created_at
+    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(UserSession.session_id, UserSession.created_at).all()
+    
+    # Group the sessions by session_id
+    session_dict = defaultdict(list)
+    for session in sessions:
+        session_dict[session.session_id].append({
+            'message_type': session.message_type,
+            'message': session.message,
+            'created_at': session.created_at
+        })
+    
+    # Sort messages within each session by created_at in ascending order
+    for session_id in session_dict:
+        session_dict[session_id] = sorted(session_dict[session_id], key=lambda x: x['created_at'])
+    
+    # Format the output as a list of dictionaries with session_id as the key
+    result = [
+        {
+            'session_id': session_id,
+            'messages': session_dict[session_id]
+        }
+        for session_id in sorted(session_dict.keys(), key=lambda x: session_dict[x][-1]['created_at'], reverse=True)
+    ]
+    
+    # Return the formatted chat history
+    return result
+
 
 def get_history_user(db: Session, user: str):
     logger.info('get_history_user!')
