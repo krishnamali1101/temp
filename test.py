@@ -1,3 +1,22 @@
+
+def get_history_user(db: Session, user: str):
+    logger.info('get_history_user!')
+    
+    # Query the UserSession table filtered by the user and ordered by session_id and created_at
+    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(UserSession.session_id, UserSession.created_at).all()
+    
+    # Group the sessions by session_id
+    session_dict = defaultdict(list)
+    for session in sessions:
+        session_dict[session.session_id].append(session)
+    
+    # Sort the session groups by their latest message timestamp in descending order
+    sorted_sessions = sorted(session_dict.items(), key=lambda x: x[1][-1].created_at, reverse=True)
+    
+    # Return the grouped and sorted chat history
+    return sorted_sessions
+    
+    
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
 from your_logging_module import logger  # Import your logger
