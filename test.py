@@ -1,3 +1,84 @@
+Database Schema
+Tables
+Users
+
+user_id: Primary Key, unique identifier for each user.
+username: User's name.
+email: User's email address.
+password: User's hashed password.
+Buckets
+
+bucket_id: Primary Key, unique identifier for each bucket or sub-bucket.
+bucket_name: Name of the bucket or sub-bucket (e.g., userid/private_buckets/bkt1, sub_bucket).
+parent_bucket_id: Foreign Key, references bucket_id in the same table, for linking sub-buckets to their parent buckets (NULL for top-level buckets).
+AccessControl
+
+access_id: Primary Key, unique identifier for each access control entry.
+user_id: Foreign Key, references user_id in the Users table.
+bucket_id: Foreign Key, references bucket_id in the Buckets table.
+access_level: Type of access granted (e.g., read, write, admin).
+
+
+
+
+
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+    
+    user_id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=False)
+    
+    access_controls = relationship("AccessControl", back_populates="user")
+
+class Bucket(Base):
+    __tablename__ = 'buckets'
+    
+    bucket_id = Column(Integer, primary_key=True, autoincrement=True)
+    bucket_name = Column(String(255), nullable=False)
+    parent_bucket_id = Column(Integer, ForeignKey('buckets.bucket_id'), nullable=True)
+    
+    parent_bucket = relationship("Bucket", remote_side=[bucket_id])
+    sub_buckets = relationship("Bucket", back_populates="parent_bucket", remote_side=[parent_bucket_id])
+    access_controls = relationship("AccessControl", back_populates="bucket")
+
+class AccessControl(Base):
+    __tablename__ = 'access_control'
+    
+    access_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    bucket_id = Column(Integer, ForeignKey('buckets.bucket_id'), nullable=False)
+    access_level = Column(Enum('read', 'write', 'admin', name='access_level_enum'), nullable=False)
+    
+    user = relationship("User", back_populates="access_controls")
+    bucket = relationship("Bucket", back_populates="access_controls")
+
+# Database connection setup
+DATABASE_URL = "mysql+pymysql://user:password@localhost/dbname"  # Replace with your actual database URL
+
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# Create tables
+Base.metadata.create_all(engine)
+
+
+
+
+
+
+
+
+
+
 def get_history_user(db: Session, user: str):
     logger.info('get_history_user!')
     
