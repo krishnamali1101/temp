@@ -1,4 +1,4 @@
-Database Schema
+Updated Database Schema
 Tables
 Users
 
@@ -11,15 +11,13 @@ Buckets
 bucket_id: Primary Key, unique identifier for each bucket or sub-bucket.
 bucket_name: Name of the bucket or sub-bucket (e.g., userid/private_buckets/bkt1, sub_bucket).
 parent_bucket_id: Foreign Key, references bucket_id in the same table, for linking sub-buckets to their parent buckets (NULL for top-level buckets).
+owner_id: Foreign Key, references user_id in the Users table, to store the owner/creator of the bucket.
 AccessControl
 
 access_id: Primary Key, unique identifier for each access control entry.
 user_id: Foreign Key, references user_id in the Users table.
 bucket_id: Foreign Key, references bucket_id in the Buckets table.
 access_level: Type of access granted (e.g., read, write, admin).
-
-
-
 
 
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
@@ -36,6 +34,7 @@ class User(Base):
     email = Column(String(255), nullable=False)
     password = Column(String(255), nullable=False)
     
+    owned_buckets = relationship("Bucket", back_populates="owner")
     access_controls = relationship("AccessControl", back_populates="user")
 
 class Bucket(Base):
@@ -44,9 +43,11 @@ class Bucket(Base):
     bucket_id = Column(Integer, primary_key=True, autoincrement=True)
     bucket_name = Column(String(255), nullable=False)
     parent_bucket_id = Column(Integer, ForeignKey('buckets.bucket_id'), nullable=True)
+    owner_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
     
     parent_bucket = relationship("Bucket", remote_side=[bucket_id])
     sub_buckets = relationship("Bucket", back_populates="parent_bucket", remote_side=[parent_bucket_id])
+    owner = relationship("User", back_populates="owned_buckets")
     access_controls = relationship("AccessControl", back_populates="bucket")
 
 class AccessControl(Base):
