@@ -1,3 +1,38 @@
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+def create_chatbot(model_name):
+  """Creates a chatbot using a Hugging Face LLM."""
+  model = AutoModelForCausalLM.from_pretrained(model_name)
+  tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+  def chatbot(user_input):
+    inputs = tokenizer(user_input, return_tensors="pt")
+    outputs = model.generate(**inputs, max_length=100)  # Adjust max_length as needed
+    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return response
+
+  return chatbot
+
+
+
+import mistral
+
+def create_chatbot():
+  """Creates a chatbot using the Mistral language model."""
+  llm = mistral.load("mistral-7b-instruct")  # Replace with your desired Mistral model
+
+  def chatbot(user_input):
+    """Handles user input and generates a response."""
+    response = llm.generate(user_input, max_tokens=100)  # Adjust max_tokens as needed
+    return response.text
+
+  return chatbot
+
+
+
+
+
 Updated Database Schema
 Tables
 Users
