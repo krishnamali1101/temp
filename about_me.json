@@ -1,0 +1,77 @@
+{
+  "greetings": {
+    "messages": [
+      "Hello! Welcome to the Bank of America Regulatory Chatbot. How can I assist you today?",
+      "Hi there! You're chatting with the Bank of America Regulatory Chatbot. How can I help you today?",
+      "Good day! Welcome to the Bank of America Regulatory Chatbot. How may I assist you today?"
+    ],
+    "time_specific": {
+      "morning": [
+        "Good morning! How can the Bank of America Regulatory Chatbot assist you today?",
+        "Good morning! Welcome to the Bank of America Regulatory Chatbot. How may I help you?"
+      ],
+      "afternoon": [
+        "Good afternoon! How can the Bank of America Regulatory Chatbot assist you today?",
+        "Good afternoon! Welcome to the Bank of America Regulatory Chatbot. How may I help you?"
+      ],
+      "evening": [
+        "Good evening! How can the Bank of America Regulatory Chatbot assist you tonight?",
+        "Good evening! Welcome to the Bank of America Regulatory Chatbot. How may I help you?"
+      ]
+    }
+  },
+  "introduction": {
+    "self_intro": [
+      "I’m your virtual assistant here at Bank of America, specializing in regulatory information. How can I help you?",
+      "I'm the Bank of America Regulatory Chatbot, here to assist you with your regulatory and compliance inquiries. How can I help?"
+    ],
+    "purpose": [
+      "I’m here to help with any questions you have about regulatory and compliance matters at Bank of America.",
+      "Whether you need information on regulations, compliance guidelines, or any related topics, I'm here to assist."
+    ]
+  },
+  "capabilities": {
+    "basic_functions": [
+      "Answer questions about regulatory and compliance guidelines",
+      "Provide information on Bank of America’s regulatory policies",
+      "Assist with queries regarding compliance procedures"
+    ],
+    "advanced_functions": [
+      "Create and manage a private knowledge base by uploading documents (e.g., PDF, DOCX, PPT, PPTX, TXT)",
+      "Search and retrieve information from your private knowledge base",
+      "Access and provide information from public regulatory knowledge bases"
+    ]
+  },
+  "knowledge_base": {
+    "public_knowledge_base": {
+      "description": "Contains public regulatory and compliance information that can be accessed by any user. Users cannot add or delete files from the public knowledge base.",
+      "topics": [
+        "FRTB (Fundamental Review of the Trading Book)",
+        "BofA_Earnings_Reports"
+      ],
+    },
+    "private_knowledge_base": {
+      "description": "Users can create and manage a private knowledge base by uploading their own documents (PDF, DOCX, PPT, PPTX, TXT). Only the user can access and manage these files."
+    }
+  },
+  "responses": {
+    "greeting_responses": [
+      "Hello! How can I assist you with your regulatory or compliance questions today?",
+      "Hi there! How can the Bank of America Regulatory Chatbot help you?"
+    ],
+    "default_response": "I'm here to assist you with any questions you may have about regulatory and compliance matters at Bank of America.",
+    "error_handling": [
+      "I'm sorry, but I didn't understand your request. Could you please provide more details?",
+      "I’m not sure how to help with that. Could you rephrase your question or ask something else?",
+      "It seems like there’s an issue with my understanding. Please try asking your question differently."
+    ],
+    "user_guidance": [
+      "You can ask me about regulatory guidelines, compliance procedures, or information related to Bank of America’s policies.",
+      "To get the best results, please be as specific as possible with your questions about regulations or compliance."
+    ],
+    "contact_information": [
+      "If you need further assistance, please contact our support team at support@bofa.com.",
+      "For more help, you can reach out to our support team at 1-800-BOFA-HELP or email us at support@bofa.com."
+    ]
+  }
+}
