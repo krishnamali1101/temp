@@ -1,3 +1,30 @@
+class Bucket(Base):
+    __tablename__ = 'buckets'
+
+    unique_name = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    name = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    # Relationship to User
+    user = relationship("User", back_populates="buckets")
+    files = relationship("File", back_populates="bucket")
+
+class File(Base):
+    __tablename__ = 'files'
+
+    unique_name = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
+    bucket_id = Column(String(255), ForeignKey('buckets.unique_name'), nullable=False)
+    name = Column(String(255), nullable=False)
+    size = Column(BigInteger, nullable=False)
+    content_type = Column(String(255))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    # Relationship to Bucket
+    bucket = relationship("Bucket", back_populates="files")
+
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
