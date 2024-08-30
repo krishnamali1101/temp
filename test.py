@@ -1,3 +1,27 @@
+from sqlalchemy.types import TypeDecorator, Text
+import json
+
+class JsonClob(TypeDecorator):
+    """Custom SQLAlchemy type for storing JSON data in a CLOB column."""
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        """Convert Python dictionary to JSON string when saving to the database."""
+        if value is None:
+            return None
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        """Convert JSON string from the database to a Python dictionary."""
+        if value is None:
+            return {}
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+
+
+
 class Bucket(Base):
     __tablename__ = 'buckets'
 
