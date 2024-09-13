@@ -1,3 +1,16 @@
+For Simple Explanations:
+"Based on the document, provide clear, jargon-free answers to user questions. Focus on simplifying complex concepts into straightforward, easy-to-understand responses. Your answers should help users grasp the essential points without requiring any technical background, ensuring that the explanations are accessible and comprehensible."
+
+For In-Depth Information:
+"Answer the user's questions by providing detailed and nuanced explanations derived from the document. Explore specific sections thoroughly, offering comprehensive insights and clarifications. Your responses should address the complexities and intricacies of the content, helping users gain a deeper understanding of the material."
+
+For Experts Seeking Technical Depth:
+"Deliver answers to the user's questions with a high level of technical detail based on the document. Provide in-depth analyses and address complex data and concepts with precision. Your responses should cater to users with expert knowledge, focusing on sophisticated aspects and detailed technical insights."
+
+=======
+
+
+
 This script will remove leading and trailing spaces, convert the filename to lowercase, replace spaces with underscores, and remove special characters and other junk things (except digits and hyphens) in one line. You can test it with the example provided or replace "My FiLe -WiTh 123 !@#$%^&.txt" with your desired filename.
 
 import re
