@@ -1,3 +1,44 @@
+import docx
+import pytesseract
+from PIL import Image
+import io
+
+# Function to extract text from images using pytesseract
+def extract_text_from_image(image_bytes):
+    image = Image.open(io.BytesIO(image_bytes))
+    text = pytesseract.image_to_string(image)
+    return text
+
+# Function to read text and images from docx
+def read_docx(file_path):
+    doc = docx.Document(file_path)
+    content = ""
+    
+    # Loop through document elements (paragraphs, runs, and images)
+    for para in doc.paragraphs:
+        for run in para.runs:
+            if run._element.tag.endswith('drawing'):  # This detects images
+                for rel in doc.part.rels.values():
+                    if "image" in rel.target_ref:
+                        image_part = rel.target_part
+                        image_bytes = image_part.blob
+                        # Extract text from image and append where the image is
+                        ocr_text = extract_text_from_image(image_bytes)
+                        content += f"\n[Extracted from image]: {ocr_text}\n"
+            else:
+                content += run.text
+
+        content += "\n"
+
+    return content
+
+if __name__ == "__main__":
+    docx_file = 'your_document.docx'
+    extracted_content = read_docx(docx_file)
+    print(extracted_content)
+
+
+==================================
 from sqlalchemy.types import TypeDecorator, Text
 import json
 
