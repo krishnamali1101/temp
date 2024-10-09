@@ -1,4 +1,43 @@
 import docx
+import easyocr
+from PIL import Image
+import io
+
+# Initialize EasyOCR reader (you can specify the language(s) you need)
+reader = easyocr.Reader(['en'], gpu=False)  # Use GPU if available by setting gpu=True
+
+# Function to extract text from images using EasyOCR
+def extract_text_from_image(image_bytes):
+    image = Image.open(io.BytesIO(image_bytes))
+    image.save('temp_image.png')  # Save image temporarily for EasyOCR to process
+    result = reader.readtext('temp_image.png', detail=0)  # Extract text with EasyOCR
+    return " ".join(result)
+
+# Function to extract text and images from docx, and place text where images are
+def read_docx(file_path):
+    doc = docx.Document(file_path)
+    content = ""
+
+    for para in doc.paragraphs:
+        content += para.text + "\n"  # Extract the paragraph text
+
+        # Check for images in the paragraph's inline shapes (images)
+        for run in para.runs:
+            if run._element.xpath('.//a:blip' or './/pic:blip'):
+                # This looks for image references within the run
+                for rel in doc.part.rels.values():
+                    if "image" in rel.target_ref:
+                        image_part = rel.target_part
+                        image_bytes = image_part.blob
+                        # Extract text from the image
+                        ocr_text = extract_text_from_image(image_bytes)
+                        # Add extracted text where the image was
+                        content += f"[Extracted from image]: {ocr_text}\n"
+    
+    return content
+    
+    
+import docx
 import pytesseract
 from PIL import Image
 import io
