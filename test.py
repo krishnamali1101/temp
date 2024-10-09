@@ -9,6 +9,47 @@ def extract_text_from_image(image_bytes):
     text = pytesseract.image_to_string(image)
     return text
 
+# Function to extract text and images from docx, and place text where images are
+def read_docx(file_path):
+    doc = docx.Document(file_path)
+    content = ""
+
+    for para in doc.paragraphs:
+        content += para.text + "\n"  # Extract the paragraph text
+
+        # Check for images in the paragraph's inline shapes (images)
+        for run in para.runs:
+            if run._element.xpath('.//a:blip' or './/pic:blip'):
+                # This looks for image references within the run
+                for rel in doc.part.rels.values():
+                    if "image" in rel.target_ref:
+                        image_part = rel.target_part
+                        image_bytes = image_part.blob
+                        # Extract text from the image
+                        ocr_text = extract_text_from_image(image_bytes)
+                        # Add extracted text where the image was
+                        content += f"[Extracted from image]: {ocr_text}\n"
+    
+    return content
+
+if __name__ == "__main__":
+    docx_file = 'your_document.docx'
+    extracted_content = read_docx(docx_file)
+    print(extracted_content)
+
+
+===========
+import docx
+import pytesseract
+from PIL import Image
+import io
+
+# Function to extract text from images using pytesseract
+def extract_text_from_image(image_bytes):
+    image = Image.open(io.BytesIO(image_bytes))
+    text = pytesseract.image_to_string(image)
+    return text
+
 # Function to read text and images from docx
 def read_docx(file_path):
     doc = docx.Document(file_path)
