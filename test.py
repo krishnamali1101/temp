@@ -1,3 +1,61 @@
+import io
+import pytesseract
+from PIL import Image
+import pdfplumber
+
+# Function to extract text from images using pytesseract
+def extract_text_from_image(image_bytes):
+    image = Image.open(io.BytesIO(image_bytes))
+    text = pytesseract.image_to_string(image)
+    return text
+
+# Function to read text and images from the PDF and insert extracted image text at the correct position
+def read_pdf(file_path):
+    content = ""
+    
+    with pdfplumber.open(file_path) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            page_text = ""
+            # Extract the page text and sort the objects based on their Y positions (to maintain order)
+            words = page.extract_words()
+            words = sorted(words, key=lambda x: x['top'])  # Sorting by position to maintain reading flow
+
+            image_objects = page.images
+            image_index = 0  # To track images on the page
+            
+            for word in words:
+                page_text += word['text'] + " "
+                
+                # Check if there's an image near the current word position and insert OCR text
+                if image_index < len(image_objects):
+                    image = image_objects[image_index]
+                    if word['top'] >= image['top']:
+                        image_bytes = extract_image(page, image)
+                        ocr_text = extract_text_from_image(image_bytes)
+                        page_text += f"[Extracted from image]: {ocr_text}\n"
+                        image_index += 1  # Move to the next image
+
+            # Add the text for this page to the content
+            content += page_text + "\n"
+    
+    return content
+
+# Helper function to extract an image from a page
+def extract_image(page, image_obj):
+    x0, top, x1, bottom = image_obj['x0'], image_obj['top'], image_obj['x1'], image_obj['bottom']
+    cropped_image = page.within_bbox((x0, top, x1, bottom)).to_image()
+    img_byte_arr = io.BytesIO()
+    cropped_image.save(img_byte_arr, format='PNG')  # Save image as PNG in memory
+    return img_byte_arr.getvalue()
+
+if __name__ == "__main__":
+    pdf_file = 'your_document.pdf'
+    extracted_content = read_pdf(pdf_file)
+    print(extracted_content)
+
+
+
+===================
 import docx
 import easyocr
 from PIL import Image
