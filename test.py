@@ -1,3 +1,72 @@
+import pandas as pd
+from typing import List
+import os
+from langchain.schema import Document
+
+# Function to read Excel and CSV files
+def read_file(file_path: str) -> pd.DataFrame:
+    """
+    Reads xlsx, xls, and csv files and returns a pandas DataFrame.
+
+    Args:
+        file_path (str): The file path to the Excel or CSV file.
+
+    Returns:
+        pd.DataFrame: The content of the file in a pandas DataFrame.
+    """
+    file_extension = os.path.splitext(file_path)[1].lower()
+
+    if file_extension == ".xlsx":
+        return pd.read_excel(file_path, engine='openpyxl')
+    elif file_extension == ".xls":
+        return pd.read_excel(file_path, engine='xlrd')
+    elif file_extension == ".csv":
+        return pd.read_csv(file_path)
+    else:
+        raise ValueError(f"Unsupported file extension: {file_extension}")
+
+# Function to convert DataFrame content to text
+def dataframe_to_text(df: pd.DataFrame) -> str:
+    """
+    Converts the content of a pandas DataFrame to text for use in a RAG system.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to convert.
+
+    Returns:
+        str: The text representation of the DataFrame.
+    """
+    return df.to_string(index=False)
+
+# Function to convert file content to LangChain Documents
+def file_to_documents(file_path: str) -> List[Document]:
+    """
+    Converts the content of an Excel or CSV file to a list of LangChain Documents.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        List[Document]: A list of LangChain documents containing the file content.
+    """
+    df = read_file(file_path)
+    text = dataframe_to_text(df)
+    
+    # Assuming each document corresponds to a single file in this case.
+    return [Document(page_content=text, metadata={"source": file_path})]
+
+# Example usage
+if __name__ == "__main__":
+    file_path = "path/to/your/file.xlsx"  # Provide the path to your file
+    documents = file_to_documents(file_path)
+
+    # Now you can add these documents to your LangChain vector store for retrieval.
+    for doc in documents:
+        print(f"Document from {doc.metadata['source']}:\n{doc.page_content}\n")
+
+
+
+=============
 import io
 import pytesseract
 from PIL import Image
