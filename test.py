@@ -1,3 +1,57 @@
+import os
+from pptx import Presentation
+from typing import List
+from langchain.schema import Document
+
+# Function to read .pptx files
+def read_pptx(file_path: str) -> str:
+    """
+    Reads the content of a .pptx PowerPoint file and returns the text.
+
+    Args:
+        file_path (str): The file path to the .pptx file.
+
+    Returns:
+        str: The extracted text from the PowerPoint file.
+    """
+    prs = Presentation(file_path)
+    ppt_text = []
+
+    for slide in prs.slides:
+        slide_text = []
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                slide_text.append(shape.text)
+        ppt_text.append("\n".join(slide_text))
+
+    return "\n\n".join(ppt_text)
+
+# Function to convert PowerPoint content to LangChain Documents
+def pptx_to_documents(file_path: str) -> List[Document]:
+    """
+    Converts the content of a .pptx file to a list of LangChain Documents.
+
+    Args:
+        file_path (str): Path to the .pptx file.
+
+    Returns:
+        List[Document]: A list of LangChain documents containing the file content.
+    """
+    text = read_pptx(file_path)
+    
+    # Assuming each document corresponds to a single PowerPoint file
+    return [Document(page_content=text, metadata={"source": file_path})]
+
+# Example usage
+if __name__ == "__main__":
+    file_path = "path/to/your/presentation.pptx"  # Provide the path to your .pptx file
+    documents = pptx_to_documents(file_path)
+
+    # Now you can add these documents to your LangChain vector store for retrieval.
+    for doc in documents:
+        print(f"Document from {doc.metadata['source']}:\n{doc.page_content}\n")
+
+=======
 import pandas as pd
 from typing import List
 import os
