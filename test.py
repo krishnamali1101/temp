@@ -1,3 +1,46 @@
+import time
+from llama_index import ResponseSynthesizer
+
+# Step 1: Perform vector search (document retrieval)
+start_time_vector_search = time.time()
+retrieved_docs = index.as_retriever().retrieve(prompt)
+end_time_vector_search = time.time()
+
+vector_search_duration = end_time_vector_search - start_time_vector_search
+print(f"Vector search took: {vector_search_duration:.2f} seconds")
+
+# Display retrieved documents (optional)
+for doc in retrieved_docs:
+    print(doc.text)
+
+# Step 2: LLM response generation from retrieved documents
+start_time_llm_response = time.time()
+
+# Using ResponseSynthesizer to generate LLM response
+response_synthesizer = ResponseSynthesizer()
+response = response_synthesizer.synthesize(retrieved_docs, prompt)
+
+end_time_llm_response = time.time()
+llm_response_duration = end_time_llm_response - start_time_llm_response
+print(f"LLM response took: {llm_response_duration:.2f} seconds")
+
+# Final LLM Response
+print(f"LLM Response: {response}")
+=====================================================
+
+from llama_index.core.data_structs import Node
+from llama_index.core.response_synthesizers import ResponseMode
+from llama_index.core import get_response_synthesizer
+
+response_synthesizer = get_response_synthesizer(
+    response_mode=ResponseMode.COMPACT
+)
+
+response = response_synthesizer.synthesize(
+    "query text", nodes=[Node(text="text"), ...]
+)
+
+===================
 import os
 from pptx import Presentation
 from typing import List
