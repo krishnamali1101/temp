@@ -1,632 +1,263 @@
-import time
-from llama_index import ResponseSynthesizer
-
-# Step 1: Perform vector search (document retrieval)
-start_time_vector_search = time.time()
-retrieved_docs = index.as_retriever().retrieve(prompt)
-end_time_vector_search = time.time()
-
-vector_search_duration = end_time_vector_search - start_time_vector_search
-print(f"Vector search took: {vector_search_duration:.2f} seconds")
-
-# Display retrieved documents (optional)
-for doc in retrieved_docs:
-    print(doc.text)
-
-# Step 2: LLM response generation from retrieved documents
-start_time_llm_response = time.time()
-
-# Using ResponseSynthesizer to generate LLM response
-response_synthesizer = ResponseSynthesizer()
-response = response_synthesizer.synthesize(retrieved_docs, prompt)
-
-end_time_llm_response = time.time()
-llm_response_duration = end_time_llm_response - start_time_llm_response
-print(f"LLM response took: {llm_response_duration:.2f} seconds")
-
-# Final LLM Response
-print(f"LLM Response: {response}")
-=====================================================
-
-from llama_index.core.data_structs import Node
-from llama_index.core.response_synthesizers import ResponseMode
-from llama_index.core import get_response_synthesizer
-
-response_synthesizer = get_response_synthesizer(
-    response_mode=ResponseMode.COMPACT
-)
-
-response = response_synthesizer.synthesize(
-    "query text", nodes=[Node(text="text"), ...]
-)
-
-===================
-import os
-from pptx import Presentation
-from typing import List
-from langchain.schema import Document
-
-# Function to read .pptx files
-def read_pptx(file_path: str) -> str:
-    """
-    Reads the content of a .pptx PowerPoint file and returns the text.
-
-    Args:
-        file_path (str): The file path to the .pptx file.
-
-    Returns:
-        str: The extracted text from the PowerPoint file.
-    """
-    prs = Presentation(file_path)
-    ppt_text = []
-
-    for slide in prs.slides:
-        slide_text = []
-        for shape in slide.shapes:
-            if hasattr(shape, "text"):
-                slide_text.append(shape.text)
-        ppt_text.append("\n".join(slide_text))
-
-    return "\n\n".join(ppt_text)
-
-# Function to convert PowerPoint content to LangChain Documents
-def pptx_to_documents(file_path: str) -> List[Document]:
-    """
-    Converts the content of a .pptx file to a list of LangChain Documents.
-
-    Args:
-        file_path (str): Path to the .pptx file.
-
-    Returns:
-        List[Document]: A list of LangChain documents containing the file content.
-    """
-    text = read_pptx(file_path)
-    
-    # Assuming each document corresponds to a single PowerPoint file
-    return [Document(page_content=text, metadata={"source": file_path})]
-
-# Example usage
-if __name__ == "__main__":
-    file_path = "path/to/your/presentation.pptx"  # Provide the path to your .pptx file
-    documents = pptx_to_documents(file_path)
-
-    # Now you can add these documents to your LangChain vector store for retrieval.
-    for doc in documents:
-        print(f"Document from {doc.metadata['source']}:\n{doc.page_content}\n")
-
-=======
-import pandas as pd
-from typing import List
-import os
-from langchain.schema import Document
-
-# Function to read Excel and CSV files
-def read_file(file_path: str) -> pd.DataFrame:
-    """
-    Reads xlsx, xls, and csv files and returns a pandas DataFrame.
-
-    Args:
-        file_path (str): The file path to the Excel or CSV file.
-
-    Returns:
-        pd.DataFrame: The content of the file in a pandas DataFrame.
-    """
-    file_extension = os.path.splitext(file_path)[1].lower()
-
-    if file_extension == ".xlsx":
-        return pd.read_excel(file_path, engine='openpyxl')
-    elif file_extension == ".xls":
-        return pd.read_excel(file_path, engine='xlrd')
-    elif file_extension == ".csv":
-        return pd.read_csv(file_path)
-    else:
-        raise ValueError(f"Unsupported file extension: {file_extension}")
-
-# Function to convert DataFrame content to text
-def dataframe_to_text(df: pd.DataFrame) -> str:
-    """
-    Converts the content of a pandas DataFrame to text for use in a RAG system.
-
-    Args:
-        df (pd.DataFrame): The DataFrame to convert.
-
-    Returns:
-        str: The text representation of the DataFrame.
-    """
-    return df.to_string(index=False)
-
-# Function to convert file content to LangChain Documents
-def file_to_documents(file_path: str) -> List[Document]:
-    """
-    Converts the content of an Excel or CSV file to a list of LangChain Documents.
-
-    Args:
-        file_path (str): Path to the file.
-
-    Returns:
-        List[Document]: A list of LangChain documents containing the file content.
-    """
-    df = read_file(file_path)
-    text = dataframe_to_text(df)
-    
-    # Assuming each document corresponds to a single file in this case.
-    return [Document(page_content=text, metadata={"source": file_path})]
-
-# Example usage
-if __name__ == "__main__":
-    file_path = "path/to/your/file.xlsx"  # Provide the path to your file
-    documents = file_to_documents(file_path)
-
-    # Now you can add these documents to your LangChain vector store for retrieval.
-    for doc in documents:
-        print(f"Document from {doc.metadata['source']}:\n{doc.page_content}\n")
-
-
-
-=============
-import io
-import pytesseract
-from PIL import Image
-import pdfplumber
-
-# Function to extract text from images using pytesseract
-def extract_text_from_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    text = pytesseract.image_to_string(image)
-    return text
-
-# Function to read text and images from the PDF and insert extracted image text at the correct position
-def read_pdf(file_path):
-    content = ""
-    
-    with pdfplumber.open(file_path) as pdf:
-        for page_num, page in enumerate(pdf.pages):
-            page_text = ""
-            # Extract the page text and sort the objects based on their Y positions (to maintain order)
-            words = page.extract_words()
-            words = sorted(words, key=lambda x: x['top'])  # Sorting by position to maintain reading flow
-
-            image_objects = page.images
-            image_index = 0  # To track images on the page
-            
-            for word in words:
-                page_text += word['text'] + " "
-                
-                # Check if there's an image near the current word position and insert OCR text
-                if image_index < len(image_objects):
-                    image = image_objects[image_index]
-                    if word['top'] >= image['top']:
-                        image_bytes = extract_image(page, image)
-                        ocr_text = extract_text_from_image(image_bytes)
-                        page_text += f"[Extracted from image]: {ocr_text}\n"
-                        image_index += 1  # Move to the next image
-
-            # Add the text for this page to the content
-            content += page_text + "\n"
-    
-    return content
-
-# Helper function to extract an image from a page
-def extract_image(page, image_obj):
-    x0, top, x1, bottom = image_obj['x0'], image_obj['top'], image_obj['x1'], image_obj['bottom']
-    cropped_image = page.within_bbox((x0, top, x1, bottom)).to_image()
-    img_byte_arr = io.BytesIO()
-    cropped_image.save(img_byte_arr, format='PNG')  # Save image as PNG in memory
-    return img_byte_arr.getvalue()
-
-if __name__ == "__main__":
-    pdf_file = 'your_document.pdf'
-    extracted_content = read_pdf(pdf_file)
-    print(extracted_content)
-
-
-
-===================
-import docx
-import easyocr
-from PIL import Image
-import io
-
-# Initialize EasyOCR reader (you can specify the language(s) you need)
-reader = easyocr.Reader(['en'], gpu=False)  # Use GPU if available by setting gpu=True
-
-# Function to extract text from images using EasyOCR
-def extract_text_from_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    image.save('temp_image.png')  # Save image temporarily for EasyOCR to process
-    result = reader.readtext('temp_image.png', detail=0)  # Extract text with EasyOCR
-    return " ".join(result)
-
-# Function to extract text and images from docx, and place text where images are
-def read_docx(file_path):
-    doc = docx.Document(file_path)
-    content = ""
-
-    for para in doc.paragraphs:
-        content += para.text + "\n"  # Extract the paragraph text
-
-        # Check for images in the paragraph's inline shapes (images)
-        for run in para.runs:
-            if run._element.xpath('.//a:blip' or './/pic:blip'):
-                # This looks for image references within the run
-                for rel in doc.part.rels.values():
-                    if "image" in rel.target_ref:
-                        image_part = rel.target_part
-                        image_bytes = image_part.blob
-                        # Extract text from the image
-                        ocr_text = extract_text_from_image(image_bytes)
-                        # Add extracted text where the image was
-                        content += f"[Extracted from image]: {ocr_text}\n"
-    
-    return content
-    
-    
-import docx
-import pytesseract
-from PIL import Image
-import io
-
-# Function to extract text from images using pytesseract
-def extract_text_from_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    text = pytesseract.image_to_string(image)
-    return text
-
-# Function to extract text and images from docx, and place text where images are
-def read_docx(file_path):
-    doc = docx.Document(file_path)
-    content = ""
-
-    for para in doc.paragraphs:
-        content += para.text + "\n"  # Extract the paragraph text
-
-        # Check for images in the paragraph's inline shapes (images)
-        for run in para.runs:
-            if run._element.xpath('.//a:blip' or './/pic:blip'):
-                # This looks for image references within the run
-                for rel in doc.part.rels.values():
-                    if "image" in rel.target_ref:
-                        image_part = rel.target_part
-                        image_bytes = image_part.blob
-                        # Extract text from the image
-                        ocr_text = extract_text_from_image(image_bytes)
-                        # Add extracted text where the image was
-                        content += f"[Extracted from image]: {ocr_text}\n"
-    
-    return content
-
-if __name__ == "__main__":
-    docx_file = 'your_document.docx'
-    extracted_content = read_docx(docx_file)
-    print(extracted_content)
-
-
-===========
-import docx
-import pytesseract
-from PIL import Image
-import io
-
-# Function to extract text from images using pytesseract
-def extract_text_from_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    text = pytesseract.image_to_string(image)
-    return text
-
-# Function to read text and images from docx
-def read_docx(file_path):
-    doc = docx.Document(file_path)
-    content = ""
-    
-    # Loop through document elements (paragraphs, runs, and images)
-    for para in doc.paragraphs:
-        for run in para.runs:
-            if run._element.tag.endswith('drawing'):  # This detects images
-                for rel in doc.part.rels.values():
-                    if "image" in rel.target_ref:
-                        image_part = rel.target_part
-                        image_bytes = image_part.blob
-                        # Extract text from image and append where the image is
-                        ocr_text = extract_text_from_image(image_bytes)
-                        content += f"\n[Extracted from image]: {ocr_text}\n"
-            else:
-                content += run.text
-
-        content += "\n"
-
-    return content
-
-if __name__ == "__main__":
-    docx_file = 'your_document.docx'
-    extracted_content = read_docx(docx_file)
-    print(extracted_content)
-
-
-==================================
-from sqlalchemy.types import TypeDecorator, Text
-import json
-
-class JsonClob(TypeDecorator):
-    """Custom SQLAlchemy type for storing JSON data in a CLOB column."""
-    impl = Text
-
-    def process_bind_param(self, value, dialect):
-        """Convert Python dictionary to JSON string when saving to the database."""
-        if value is None:
-            return None
-        return json.dumps(value)
-
-    def process_result_value(self, value, dialect):
-        """Convert JSON string from the database to a Python dictionary."""
-        if value is None:
-            return {}
-        try:
-            return json.loads(value)
-        except json.JSONDecodeError:
-            return {}
-
-
-
-class Bucket(Base):
-    __tablename__ = 'buckets'
-
-    unique_name = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    name = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-
-    # Relationship to User
-    user = relationship("User", back_populates="buckets")
-    files = relationship("File", back_populates="bucket")
-
-class File(Base):
-    __tablename__ = 'files'
-
-    unique_name = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
-    bucket_id = Column(String(255), ForeignKey('buckets.unique_name'), nullable=False)
-    name = Column(String(255), nullable=False)
-    size = Column(BigInteger, nullable=False)
-    content_type = Column(String(255))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-
-    # Relationship to Bucket
-    bucket = relationship("Bucket", back_populates="files")
-
-
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-def create_chatbot(model_name):
-  """Creates a chatbot using a Hugging Face LLM."""
-  model = AutoModelForCausalLM.from_pretrained(model_name)
-  tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-  def chatbot(user_input):
-    inputs = tokenizer(user_input, return_tensors="pt")
-    outputs = model.generate(**inputs, max_length=100)  # Adjust max_length as needed
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+%%writefile requirements.txt
+llama-index
+llama-index-llms-huggingface
+llama-index-embeddings-fastembed
+fastembed
+Unstructured[md]
+chromadb
+llama-index-vector-stores-chroma
+llama-index-llms-groq
+einops
+accelerate
+sentence-transformers
+llama-index-llms-mistralai
+llama-index-llms-openai
+
+
+from llama_index.core import SimpleDirectoryReader,VectorStoreIndex,SummaryIndex
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import StorageContext
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.tools import FunctionTool,QueryEngineTool
+from llama_index.core.vector_stores import MetadataFilters,FilterCondition
+from typing import List,Optional
+
+import  nest_asyncio
+nest_asyncio.apply()
+
+
+documents = SimpleDirectoryReader(input_files = ['./data/self_rag_arxiv.pdf']).load_data()
+print(len(documents))
+print(f"Document Metadata: {documents[0].metadata}")
+
+splitter = SentenceSplitter(chunk_size=1024,chunk_overlap=100)
+nodes = splitter.get_nodes_from_documents(documents)
+print(f"Length of nodes : {len(nodes)}")
+print(f"get the content for node 0 :{nodes[0].get_content(metadata_mode='all')}")
+
+# Instantiate the vectorstore
+
+import chromadb
+db = chromadb.PersistentClient(path="./chroma_db_mistral")
+chroma_collection = db.get_or_create_collection("multidocument-agent")
+vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+#Instantiate the embedding model
+
+from llama_index.embeddings.fastembed import FastEmbedEmbedding
+from llama_index.core import Settings
+#
+embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
+#
+Settings.embed_model = embed_model
+#
+Settings.chunk_size = 1024
+#
+
+
+#Instantiate the LLM
+
+from llama_index.llms.mistralai import MistralAI
+os.environ["MISTRAL_API_KEY"] = userdata.get("MISTRAL_API_KEY")
+llm = MistralAI(model="mistral-large-latest")
+
+
+
+#instantiate Vectorstore
+name = "BERT_arxiv"
+vector_index = VectorStoreIndex(nodes,storage_context=storage_context)
+vector_index.storage_context.vector_store.persist(persist_path="/content/chroma_db")
+#
+# Define Vectorstore Autoretrieval tool
+def vector_query(query:str,page_numbers:Optional[List[str]]=None)->str:
+  '''
+  perform vector search over index on
+  query(str): query string needs to be embedded
+  page_numbers(List[str]): list of page numbers to be retrieved,
+                          leave blank if we want to perform a vector search over all pages
+  '''
+  page_numbers = page_numbers or []
+  metadata_dict = [{"key":'page_label',"value":p} for p in page_numbers]
+  #
+  query_engine = vector_index.as_query_engine(similarity_top_k =2,
+                                              filters = MetadataFilters.from_dicts(metadata_dict,
+                                                                                    condition=FilterCondition.OR)
+                                              )
+  #
+  response = query_engine.query(query)
+  return response
+#
+#llamiondex FunctionTool wraps any python function we feed it
+vector_query_tool = FunctionTool.from_defaults(name=f"vector_tool_{name}",
+                                              fn=vector_query)
+# Prepare Summary Tool
+summary_index = SummaryIndex(nodes)
+summary_query_engine = summary_index.as_query_engine(response_mode="tree_summarize",
+                                                      se_async=True,)
+summary_query_tool = QueryEngineTool.from_defaults(name=f"summary_tool_{name}",
+                                                    query_engine=summary_query_engine,
+                                                  description=("Use ONLY IF you want to get a holistic summary of the documents."
+                                              "DO NOT USE if you have specified questions over the documents."))
+Test the LLM
+
+response = llm.predict_and_call([vector_query_tool],
+                                "Summarize the content in page number 2",
+                                verbose=True)
+######################RESPONSE###########################
+=== Calling Function ===
+Calling function: vector_tool_BERT_arxiv with args: {"query": "summarize content", "page_numbers": ["2"]}
+=== Function Output ===
+The content discusses the use of RAG models for knowledge-intensive generation tasks, such as MS-MARCO and Jeopardy question generation, showing that the models produce more factual, specific, and diverse responses compared to a BART baseline. The models also perform well in FEVER fact verification, achieving results close to state-of-the-art pipeline models. Additionally, the models demonstrate the ability to update their knowledge as the world changes by replacing the non-parametric memory.
+Helper function to generate Vectorstore Tool and Summary tool for all the documents
+def get_doc_tools(file_path:str,name:str)->str:
+  '''
+  get vector query and sumnmary query tools from a document
+  '''
+  #load documents
+  documents = SimpleDirectoryReader(input_files = [file_path]).load_data()
+  print(f"length of nodes")
+  splitter = SentenceSplitter(chunk_size=1024,chunk_overlap=100)
+  nodes = splitter.get_nodes_from_documents(documents)
+  print(f"Length of nodes : {len(nodes)}")
+  #instantiate Vectorstore
+  vector_index = VectorStoreIndex(nodes,storage_context=storage_context)
+  vector_index.storage_context.vector_store.persist(persist_path="/content/chroma_db")
+  #
+  # Define Vectorstore Autoretrieval tool
+  def vector_query(query:str,page_numbers:Optional[List[str]]=None)->str:
+    '''
+    perform vector search over index on
+    query(str): query string needs to be embedded
+    page_numbers(List[str]): list of page numbers to be retrieved,
+                            leave blank if we want to perform a vector search over all pages
+    '''
+    page_numbers = page_numbers or []
+    metadata_dict = [{"key":'page_label',"value":p} for p in page_numbers]
+    #
+    query_engine = vector_index.as_query_engine(similarity_top_k =2,
+                                                filters = MetadataFilters.from_dicts(metadata_dict,
+                                                                                     condition=FilterCondition.OR)
+                                                )
+    #
+    response = query_engine.query(query)
     return response
+  #
+  #llamiondex FunctionTool wraps any python function we feed it
+  vector_query_tool = FunctionTool.from_defaults(name=f"vector_tool_{name}",
+                                                fn=vector_query)
+  # Prepare Summary Tool
+  summary_index = SummaryIndex(nodes)
+  summary_query_engine = summary_index.as_query_engine(response_mode="tree_summarize",
+                                                       se_async=True,)
+  summary_query_tool = QueryEngineTool.from_defaults(name=f"summary_tool_{name}",
+                                                     query_engine=summary_query_engine,
+                                                    description=("Use ONLY IF you want to get a holistic summary of the documents."
+                                                "DO NOT USE if you have specified questions over the documents."))
+  return vector_query_tool,summary_query_tool
 
-  return chatbot
+Prepare a input list with specified document names
 
+import os
+root_path = "/content/data"
+file_name = []
+file_path = []
+for files in os.listdir(root_path):
+  if file.endswith(".pdf"):
+    file_name.append(files.split(".")[0])
+    file_path.append(os.path.join(root_path,file))
+#
+print(file_name)
+print(file_path)
 
-
-import mistral
-
-def create_chatbot():
-  """Creates a chatbot using the Mistral language model."""
-  llm = mistral.load("mistral-7b-instruct")  # Replace with your desired Mistral model
-
-  def chatbot(user_input):
-    """Handles user input and generates a response."""
-    response = llm.generate(user_input, max_tokens=100)  # Adjust max_tokens as needed
-    return response.text
-
-  return chatbot
-
-
-
-
-
-Updated Database Schema
-Tables
-Users
-
-user_id: Primary Key, unique identifier for each user.
-username: User's name.
-email: User's email address.
-password: User's hashed password.
-Buckets
-
-bucket_id: Primary Key, unique identifier for each bucket or sub-bucket.
-bucket_name: Name of the bucket or sub-bucket (e.g., userid/private_buckets/bkt1, sub_bucket).
-parent_bucket_id: Foreign Key, references bucket_id in the same table, for linking sub-buckets to their parent buckets (NULL for top-level buckets).
-owner_id: Foreign Key, references user_id in the Users table, to store the owner/creator of the bucket.
-AccessControl
-
-access_id: Primary Key, unique identifier for each access control entry.
-user_id: Foreign Key, references user_id in the Users table.
-bucket_id: Foreign Key, references bucket_id in the Buckets table.
-access_level: Type of access granted (e.g., read, write, admin).
+################################RESPONSE###############################
+['self_rag_arxiv', 'crag_arxiv', 'RAG_arxiv', '', 'BERT_arxiv']
+['/content/data/BERT_arxiv.pdf',
+ '/content/data/BERT_arxiv.pdf',
+ '/content/data/BERT_arxiv.pdf',
+ '/content/data/BERT_arxiv.pdf',
+ '/content/data/BERT_arxiv.pdf']
 
 
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
 
-Base = declarative_base()
+papers_to_tools_dict = {}
+for name,filename in zip(file_name,file_path):
+  vector_query_tool,summary_query_tool = get_doc_tools(filename,name)
+  papers_to_tools_dict[name] = [vector_query_tool,summary_query_tool]
 
-class User(Base):
-    __tablename__ = 'users'
-    
-    user_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=False)
-    password = Column(String(255), nullable=False)
-    
-    owned_buckets = relationship("Bucket", back_populates="owner")
-    access_controls = relationship("AccessControl", back_populates="user")
 
-class Bucket(Base):
-    __tablename__ = 'buckets'
-    
-    bucket_id = Column(Integer, primary_key=True, autoincrement=True)
-    bucket_name = Column(String(255), nullable=False)
-    parent_bucket_id = Column(Integer, ForeignKey('buckets.bucket_id'), nullable=True)
-    owner_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
-    
-    parent_bucket = relationship("Bucket", remote_side=[bucket_id])
-    sub_buckets = relationship("Bucket", back_populates="parent_bucket", remote_side=[parent_bucket_id])
-    owner = relationship("User", back_populates="owned_buckets")
-    access_controls = relationship("AccessControl", back_populates="bucket")
 
-class AccessControl(Base):
-    __tablename__ = 'access_control'
-    
-    access_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
-    bucket_id = Column(Integer, ForeignKey('buckets.bucket_id'), nullable=False)
-    access_level = Column(Enum('read', 'write', 'admin', name='access_level_enum'), nullable=False)
-    
-    user = relationship("User", back_populates="access_controls")
-    bucket = relationship("Bucket", back_populates="access_controls")
+Get the tools into a flat list
 
-# Database connection setup
-DATABASE_URL = "mysql+pymysql://user:password@localhost/dbname"  # Replace with your actual database URL
+initial_tools = [t for f in file_name for t in papers_to_tools_dict[f]]
+initial_tools
 
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-session = Session()
 
-# Create tables
-Base.metadata.create_all(engine)
+from llama_index.core import VectorStoreIndex
+from llama_index.core.objects import ObjectIndex
+#
+obj_index = ObjectIndex.from_objects(initial_tools,index_cls=VectorStoreIndex)
+#
+
+
+
+obj_retriever = obj_index.as_retriever(similarity_top_k=2)
+tools = obj_retriever.retrieve("compare and contrast the papers self rag and corrective rag")
+#
+print(tools[0].metadata)
+print(tools[1].metadata)
+
+###################################RESPONSE###########################
+ToolMetadata(description='Use ONLY IF you want to get a holistic summary of the documents.DO NOT USE if you have specified questions over the documents.', name='summary_tool_self_rag_arxiv', fn_schema=<class 'llama_index.core.tools.types.DefaultToolFnSchema'>, return_direct=False)
+
+ToolMetadata(description='vector_tool_self_rag_arxiv(query: str, page_numbers: Optional[List[str]] = None) -> str\n\n    perform vector search over index on\n    query(str): query string needs to be embedded\n    page_numbers(List[str]): list of page numbers to be retrieved,\n                            leave blank if we want to perform a vector search over all pages\n    ', name='vector_tool_self_rag_arxiv', fn_schema=<class 'pydantic.v1.main.vector_tool_self_rag_arxiv'>, return_direct=False)
+
+
+
+Setup the RAG Agent
+from llama_index.core.agent import FunctionCallingAgentWorker
+from llama_index.core.agent import AgentRunner
+#
+agent_worker = FunctionCallingAgentWorker.from_tools(tool_retriever=obj_retriever,
+                                                     llm=llm,
+                                                     system_prompt="""You are an agent designed to answer queries over a set of given papers.
+                                                     Please always use the tools provided to answer a question.Do not rely on prior knowledge.""",
+                                                     verbose=True)
+agent = AgentRunner(agent_worker)
 
 
 
 
+Ask Query 1
+
+#
+response = agent.query("Compare and contrast self rag and crag.")
+print(str(response))
+
+##############################RESPONSE###################################
+Added user message to memory: Compare and contrast self rag and crag.
+=== LLM Response ===
+Sure, I'd be happy to help you understand the differences between Self RAG and CRAG, based on the functions provided to me.
+
+Self RAG (Retrieval-Augmented Generation) is a method where the model generates a holistic summary of the documents provided as input. It's important to note that this method should only be used if you want a general summary of the documents, and not if you have specific questions over the documents.
+
+On the other hand, CRAG (Contrastive Retrieval-Augmented Generation) is also a method for generating a holistic summary of the documents. The key difference between CRAG and Self RAG is not explicitly clear from the functions provided. However, the name suggests that CRAG might use a contrastive approach in its retrieval process, which could potentially lead to a summary that highlights the differences and similarities between the documents more effectively.
+
+Again, it's crucial to remember that both of these methods should only be used for a holistic summary, and not for answering specific questions over the documents.
 
 
 
 
+Ask Query 2
 
-
-def get_history_user(db: Session, user: str):
-    logger.info('get_history_user!')
-    
-    # Query the UserSession table filtered by the user and ordered by session_id and created_at
-    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(UserSession.session_id, UserSession.created_at).all()
-    
-    # Group the sessions by session_id
-    session_dict = defaultdict(list)
-    for session in sessions:
-        session_dict[session.session_id].append({
-            'message_type': session.message_type,
-            'message': session.message,
-            'created_at': session.created_at
-        })
-    
-    # Sort messages within each session by created_at in ascending order
-    for session_id in session_dict:
-        session_dict[session_id] = sorted(session_dict[session_id], key=lambda x: x['created_at'])
-    
-    # Format the output as a list of dictionaries with session_id as the key
-    result = [
-        {
-            'session_id': session_id,
-            'messages': session_dict[session_id]
-        }
-        for session_id in sorted(session_dict.keys(), key=lambda x: session_dict[x][-1]['created_at'], reverse=True)
-    ]
-    
-    # Return the formatted chat history
-    return result
-
-
-def get_history_user(db: Session, user: str):
-    logger.info('get_history_user!')
-    
-    # Query the UserSession table filtered by the user and ordered by session_id and created_at
-    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(UserSession.session_id, UserSession.created_at).all()
-    
-    # Group the sessions by session_id
-    session_dict = defaultdict(list)
-    for session in sessions:
-        session_dict[session.session_id].append(session)
-    
-    # Sort the session groups by their latest message timestamp in descending order
-    sorted_sessions = sorted(session_dict.items(), key=lambda x: x[1][-1].created_at, reverse=True)
-    
-    # Return the grouped and sorted chat history
-    return sorted_sessions
-    
-    
-from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
-from your_logging_module import logger  # Import your logger
-
-# Assuming @log_performance is a custom decorator you've implemented
-# @log_performance
-def get_history_user(db: Session, user):
-    logger.info('get_history_user!')
-    
-    # Query to get sessions of the user sorted by creation date (latest first)
-    sessions = db.query(UserSession).filter(UserSession.nbkid == user).order_by(desc(UserSession.created_at)).all()
-    
-    # Create a dictionary to store the chat history grouped by session
-    history = {}
-    
-    for session in sessions:
-        # Query to get chats in each session sorted by creation date (ascending)
-        chats = db.query(Chat).filter(Chat.session_id == session.id).order_by(asc(Chat.created_at)).all()
-        history[session.id] = {
-            'session_info': session,
-            'chats': chats
-        }
-    
-    return history
-
-
-
-
-
-
-
-from langchain.llms import HuggingFacePipeline
-from langchain.prompts import PromptTemplate
-
-def create_prompt():
-    template = """You are a question answering Large Language Model.
-    Answer the following question.
-    USER: {question}
-    ASSISTANT:"""
-    prompt = PromptTemplate.from_template(template)
-    return prompt
-
-def create_llm_pipeline(model_id):
-    llm_pipeline = HuggingFacePipeline.from_model_id(
-    model_id=model_id,
-    task="text-generation",
-    device=0,  # -1 for CPU
-    batch_size=1,  
-    model_kwargs={"do_sample": True, "max_length": 128},
-    )
-    return llm_pipeline
-
-def create_chain(prompt, llm_pipeline):
-    chain = prompt | llm_pipeline.bind(stop=["USER:"])
-    return chain
-
-if __name__ == "__main__":
-    model_id = "togethercomputer/RedPajama-INCITE-Instruct-3B-v1"
-    #model_id = "mistralai/Mistral-7B-v0.1"
-    chain = create_chain(create_prompt(), create_llm_pipeline(model_id=model_id))
-
-    keep_running = True
-    while keep_running:
-        print("input something...")
-        question = input()
-        if question != "exit":
-            print(chain.invoke({"question": question}))
-        else:
-            keep_running = False
+response = agent.query("Summarize the paper corrective RAG.")
+print(str(response))
+###############################RESPONSE#######################
+Added user message to memory: Summarize the paper corrective RAG.
+=== Calling Function ===
+Calling function: summary_tool_RAG_arxiv with args: {"input": "corrective RAG"}
+=== Function Output ===
+The corrective RAG approach is a method used to address issues or errors in a system by categorizing them into three levels: Red, Amber, and Green. Red signifies critical problems that need immediate attention, Amber indicates issues that require monitoring or action in the near future, and Green represents no significant concerns. This approach helps prioritize and manage corrective actions effectively based on the severity of the identified issues.
+=== LLM Response ===
+The corrective RAG approach categorizes issues into Red, Amber, and Green levels to prioritize and manage corrective actions effectively based on severity. Red signifies critical problems needing immediate attention, Amber requires monitoring or action soon, and Green indicates no significant concerns.
+assistant: The corrective RAG approach categorizes issues into Red, Amber, and Green levels to prioritize and manage corrective actions effectively based on severity. Red signifies critical problems needing immediate attention, Amber requires monitoring or action soon, and Green indicates no significant concerns.
