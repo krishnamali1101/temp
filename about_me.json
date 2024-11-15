@@ -65,7 +65,7 @@
     <div id="chat-container">
         <div id="messages"></div>
         <div id="input-container">
-            <input type="text" id="user-input" placeholder="Type your prompt..." />
+            <input type="text" id="user-input" placeholder="Type your query..." />
             <button id="send-btn">Send</button>
         </div>
     </div>
@@ -76,16 +76,16 @@
         const messagesContainer = document.getElementById('messages');
 
         sendButton.addEventListener('click', async () => {
-            const prompt = userInput.value.trim();
-            if (!prompt) return;
+            const query = userInput.value.trim();
+            if (!query) return;
 
             // Clear input and disable the button
             userInput.value = '';
             sendButton.disabled = true;
 
-            // Add the user's input to the chat
+            // Add the user's query to the chat
             const userMessage = document.createElement('div');
-            userMessage.textContent = `You: ${prompt}`;
+            userMessage.textContent = `You: ${query}`;
             messagesContainer.appendChild(userMessage);
 
             // Fetch the response stream from the FastAPI endpoint
@@ -95,7 +95,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ prompt }),
+                    body: JSON.stringify({ query }),
                 });
 
                 const reader = response.body.getReader();
