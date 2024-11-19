@@ -1,3 +1,30 @@
+def update_requirements(old_file, new_file, output_file):
+    # Read old and new requirements
+    with open(old_file, 'r') as f:
+        old_reqs = {line.split("==")[0]: line.strip() for line in f if "==" in line}
+    
+    with open(new_file, 'r') as f:
+        new_reqs = {line.split("==")[0]: line.strip() for line in f if "==" in line}
+    
+    # Update old requirements with versions from new requirements
+    updated_reqs = []
+    for lib, old_line in old_reqs.items():
+        if lib in new_reqs:
+            updated_reqs.append(new_reqs[lib])  # Use the new version if available
+        else:
+            updated_reqs.append(old_line)  # Keep the old version if no update
+    
+    # Write the updated requirements to the output file
+    with open(output_file, 'w') as f:
+        f.write("\n".join(updated_reqs))
+    
+    print(f"Updated requirements saved to {output_file}")
+
+# Usage
+update_requirements('old_req.txt', 'new_req.txt', 'updated_req.txt')
+
+
+
 %%writefile requirements.txt
 llama-index
 llama-index-llms-huggingface
