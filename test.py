@@ -1,18 +1,21 @@
-def update_requirements(old_file, new_file, output_file):
-    # Read old and new requirements
+def update_requirements_ordered_complete(old_file, new_file, output_file):
+    # Read old requirements into a list and a dictionary
     with open(old_file, 'r') as f:
-        old_reqs = {line.split("==")[0]: line.strip() for line in f if "==" in line}
+        old_reqs = [line.strip() for line in f if "==" in line]
+        old_reqs_dict = {line.split("==")[0]: line.strip() for line in old_reqs}
     
+    # Read new requirements into a dictionary
     with open(new_file, 'r') as f:
-        new_reqs = {line.split("==")[0]: line.strip() for line in f if "==" in line}
+        new_reqs_dict = {line.split("==")[0]: line.strip() for line in f if "==" in line}
     
-    # Update old requirements with versions from new requirements
+    # Generate updated requirements
     updated_reqs = []
-    for lib, old_line in old_reqs.items():
-        if lib in new_reqs:
-            updated_reqs.append(new_reqs[lib])  # Use the new version if available
+    for line in old_reqs:
+        lib_name = line.split("==")[0]
+        if lib_name in new_reqs_dict:
+            updated_reqs.append(new_reqs_dict[lib_name])  # Use version from new_req.txt
         else:
-            updated_reqs.append(old_line)  # Keep the old version if no update
+            updated_reqs.append(line)  # Keep the version from old_req.txt
     
     # Write the updated requirements to the output file
     with open(output_file, 'w') as f:
@@ -21,7 +24,8 @@ def update_requirements(old_file, new_file, output_file):
     print(f"Updated requirements saved to {output_file}")
 
 # Usage
-update_requirements('old_req.txt', 'new_req.txt', 'updated_req.txt')
+update_requirements_ordered_complete('old_req.txt', 'new_req.txt', 'updated_req.txt')
+
 
 
 
