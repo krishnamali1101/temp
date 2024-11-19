@@ -27,6 +27,10 @@ def update_requirements_ordered_complete(old_file, new_file, output_file):
 update_requirements_ordered_complete('old_req.txt', 'new_req.txt', 'updated_req.txt')
 
 
+# Usage
+update_requirements_ordered_complete('old_req.txt', 'new_req.txt', 'updated_req.txt')
+
+
 
 
 %%writefile requirements.txt
