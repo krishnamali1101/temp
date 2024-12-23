@@ -1,3 +1,110 @@
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+# Initialize embedding model
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Predefined set of "summarize" templates
+summarization_templates = [
+    "Summarize this document.",
+    "Provide a summary of this document.",
+    "Can you summarize the entire document?",
+    "Give an overview of this document.",
+    "What is this document about?",
+]
+
+# Embed the summarization templates
+template_embeddings = model.encode(summarization_templates)
+
+def calculate_cosine_similarity(query_embedding, template_embeddings):
+    """
+    Calculate cosine similarity between query embedding and template embeddings.
+    """
+    similarity_scores = np.dot(template_embeddings, query_embedding) / (
+        np.linalg.norm(template_embeddings, axis=1) * np.linalg.norm(query_embedding)
+    )
+    return similarity_scores
+
+def determine_top_k(query, summarization_templates, template_embeddings, low_k=5, mid_k=10, high_k=20, threshold=0.8):
+    """
+    Determine similarity_top_k dynamically based on query type and similarity scores.
+
+    Recommendations for 100-page documents:
+    1. Specific Queries (e.g., "What is the conclusion in section 4?"):
+       - Use low_k (5–10) to focus on the most relevant chunks.
+    2. Broad Queries (e.g., "Summarize this document"):
+       - Use high_k (15–20 or more) to gather enough data for a comprehensive response.
+    3. Adaptive Approach:
+       - Short queries: Lower similarity_top_k (5–10).
+       - Longer queries: Higher similarity_top_k (15–30).
+    """
+    # Embed the query
+    query_embedding = model.encode([query])[0]
+    
+    # Calculate cosine similarity with summarization templates
+    similarity_scores = calculate_cosine_similarity(query_embedding, template_embeddings)
+    
+    # Get the maximum similarity score
+    max_similarity = max(similarity_scores)
+
+    # Determine top_k based on similarity and query length
+    if max_similarity >= threshold:  # Broad query
+        top_k = high_k
+    elif len(query.split()) > 10:  # Long exploratory query
+        top_k = mid_k
+    else:  # Specific or focused query
+        top_k = low_k
+    
+    return top_k, max_similarity
+
+# Example queries
+query1 = "Summarize this document."
+query2 = "Explain the content of page 4."
+query3 = "What is discussed in the results section?"
+
+# Determine top_k for each query
+top_k_query1, similarity1 = determine_top_k(query1, summarization_templates, template_embeddings)
+top_k_query2, similarity2 = determine_top_k(query2, summarization_templates, template_embeddings)
+top_k_query3, similarity3 = determine_top_k(query3, summarization_templates, template_embeddings)
+
+# Output results
+print(f"Query 1: {query1}, Top K: {top_k_query1}, Similarity: {similarity1:.2f}")
+print(f"Query 2: {query2}, Top K: {top_k_query2}, Similarity: {similarity2:.2f}")
+print(f"Query 3: {query3}, Top K: {top_k_query3}, Similarity: {similarity3:.2f}")
+
+# Recommendations for response_mode
+def choose_response_mode(query):
+    """
+    Choose response_mode based on query type:
+    1. Use 'tree_summarizer' for broad summaries (hierarchical summarization for large datasets).
+    2. Use 'compact' or 'simple' for faster, direct results for specific answers.
+    """
+    if "summarize" in query.lower() or "overview" in query.lower():
+        return "tree_summarizer"
+    else:
+        return "compact"
+
+# Example usage with query engine
+response_mode_query1 = choose_response_mode(query1)
+response_mode_query2 = choose_response_mode(query2)
+
+print(f"Response Mode for Query 1: {response_mode_query1}")
+print(f"Response Mode for Query 2: {response_mode_query2}")
+
+# Integrating with query engine
+query_engine = index.as_query_engine(
+    response_mode=response_mode_query1,
+    similarity_top_k=top_k_query1  # Dynamic top_k based on the query
+)
+
+# Example response
+response = query_engine.query(query1)
+print("Response:", response)
+
+
+===========
+
+
 def update_requirements_ordered_complete(old_file, new_file, output_file):
     # Read old requirements into a list and a dictionary
     with open(old_file, 'r') as f:
