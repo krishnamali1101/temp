@@ -1,3 +1,27 @@
+
+Yes, running pipeline.run(documents=[Document.example()]) can add duplicate documents if the same document is processed multiple times without any deduplication strategy in place. To avoid adding duplicate documents, you can use the docstore_strategy parameter in the IngestionPipeline to handle duplicates.
+
+According to the LlamaIndex documentation, you can set the docstore_strategy to UPSERTS, which checks if a document is already in the docstore based on its ID and hash. If the document is new or has been updated, it will be processed; otherwise, it will be skipped.
+
+Here's an example of how to configure the pipeline to avoid duplicates:
+
+python
+
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.node_parser import SentenceSplitter
+pipeline = IngestionPipeline(
+    transformations=[
+        SentenceSplitter(),
+        HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5"),
+    ],
+    docstore=SimpleDocumentStore(),
+    docstore_strategy='upserts',  # Use upserts to handle duplicates
+)
+nodes = pipeline.run(documents=[Document.example()])
+Would you like more detail on setting up the pipeline or handling duplicates?
+==============
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
