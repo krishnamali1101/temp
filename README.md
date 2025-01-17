@@ -1,3 +1,26 @@
+Here’s a short and professional last working day message you can use to inform your team and managers:
+
+---
+
+**Subject:** Thank You and Goodbye  
+
+Dear Team/Managers,  
+
+Today marks my last working day at [Company Name]. It has been an incredible journey working alongside such talented and supportive individuals. I deeply appreciate the guidance, collaboration, and learning opportunities you all have provided.  
+
+I will always cherish the experiences and memories from this role. Please feel free to reach out to me at [your personal email/LinkedIn link] if you wish to stay in touch.  
+
+Wishing you all continued success and growth!  
+
+Best regards,  
+[Your Name]  
+
+---
+
+Would you like me to tailor it further or add any personal touches?
+
+
+
 For Simple Explanations:
 "Based on the document, provide clear, jargon-free answers to user questions. Focus on simplifying complex concepts into straightforward, easy-to-understand responses. Your answers should help users grasp the essential points without requiring any technical background, ensuring that the explanations are accessible and comprehensible."
 
