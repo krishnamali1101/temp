@@ -1,3 +1,33 @@
+Here’s a professional and heartfelt draft for your last working day email. You can customize it as needed:
+
+---
+
+**Subject:** Farewell and Gratitude  
+
+Dear [Team/All],  
+
+Today marks my last working day at [Company Name], and as I write this, I am filled with mixed emotions. It has truly been an incredible journey, and I am immensely grateful for the opportunity to work alongside such talented and inspiring individuals.  
+
+I would like to take this moment to express my deepest gratitude to everyone for your support, collaboration, and encouragement throughout my time here. Whether it was brainstorming sessions, solving challenging problems, or simply sharing a laugh during coffee breaks, every moment has been a learning experience and a cherished memory.  
+
+A special thank you to my manager, [Manager's Name], and my team, [Team Name], for their trust and guidance, which have been instrumental in my growth.  
+
+While I am excited to embark on a new chapter in my career, I will deeply miss the camaraderie and the vibrant culture that makes [Company Name] such a special place.  
+
+Please feel free to stay in touch! You can reach me at [Your Personal Email] or connect with me on [LinkedIn Profile Link]. I would love to hear from you and keep our professional and personal connections alive.  
+
+Wishing you all continued success and growth in your endeavors. I hope our paths cross again in the future!  
+
+Thank you for everything.  
+
+Warm regards,  
+[Your Full Name]  
+[Your Designation]  
+
+---  
+
+Let me know if you'd like to add any personal anecdotes or specific details.
+
 Here’s a short and professional last working day message you can use to inform your team and managers:
 
 ---
