@@ -2,7 +2,7 @@ Here’s a professional and heartfelt draft for your last working day email. You
 
 ---
 
-**Subject:** Farewell and Gratitude  
+**Subject:** Signing Off with Gratitud  
 
 Dear [Team/All],  
 
